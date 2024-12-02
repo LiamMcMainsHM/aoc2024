@@ -1,0 +1,12 @@
+async function getInput(): Promise<string> {
+        const data = await Deno.readFile("input2.txt");
+        return new TextDecoder().decode(data);
+      }
+
+      async function main() {
+        const input = await getInput();
+        console.log("Puzzle input:", input);
+        // Add your solution logic here
+      }
+
+      main();
