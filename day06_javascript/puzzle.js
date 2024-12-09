@@ -78,14 +78,38 @@ const main1 = async () => {
   console.log(totalVisited);
 }
 
+const walkUntilFound = (mappedArea, direction, coord) => {
+  const characterAtCoord = (coord) => mappedArea[coord.y]?.[coord.x]
 
-const main2 = async () => {
+  let currentPosition = { ...coord };
+  let lastPlusCoord = undefined
+
+  while (true) {
+    const coordOfNextCharacter = addCoords(currentPosition, direction);
+    const character = characterAtCoord(coordOfNextCharacter);
+
+    if (character === undefined) {
+      break;
+    }
+
+    if (character === "+") {
+      lastPlusCoord = coordOfNextCharacter;
+    }
+    currentPosition = coordOfNextCharacter;
+  }
+
+  return lastPlusCoord;
+}
+
+const main2 = () => {
   const mappedArea = getAndFormatInput();
   const startingCoordinate = findCoordinate(charIsGuard, mappedArea);
   const characterAtCoord = (coord) => mappedArea[coord.y][coord.x]
 
+  let loopCount = 0;
   let currentCoord = startingCoordinate
   let hasRotated = false
+  let previousCharacter
   while (true) {
     const guardCharacter = characterAtCoord(currentCoord);
     const direction = directions[guardCharacter];
@@ -97,36 +121,33 @@ const main2 = async () => {
     }
 
     const nextCharacter = characterAtCoord(nextCoord);
+    previousCharacter = nextCharacter
+
+    if (nextCharacter === "X" || nextCharacter === ".") {
+      const rightDirection = directions[rotateGuard(guardCharacter)];
+      const backwardDirection = directions[rotateGuard(rotateGuard(guardCharacter))];
+
+      const rightPlusCoord = walkUntilFound(mappedArea, rightDirection, currentCoord);
+      const leftPlusCoord = walkUntilFound(mappedArea, backwardDirection, currentCoord);
+
+      if (rightPlusCoord && leftPlusCoord) {
+        loopCount++;
+      }
+    }
 
     if (nextCharacter === "#") {
       mappedArea[currentCoord.y][currentCoord.x] = rotateGuard(guardCharacter);
       hasRotated = true;
     } else {
-      mappedArea[currentCoord.y][currentCoord.x] = hasRotated ? "+" : "X";
+      mappedArea[currentCoord.y][currentCoord.x] = (hasRotated || previousCharacter === "+") ? "+" : "X";
       mappedArea[nextCoord.y][nextCoord.x] = guardCharacter;
       currentCoord = nextCoord
       hasRotated = false
     }
   }
 
-  const totalVisited = mappedArea.reduce((sum, curr) => {
-    return sum + curr.reduce((sum, curr) => sum + (curr === "X" || curr === "+" ? 1 : 0), 0)
-  }, 0);
-
-  printMappedArea(mappedArea);
+  console.log(loopCount);
 }
 
+main1();
 main2();
-
-// main1();
-
-// ....#.....
-// ....+XXX+#
-// ....X...X.
-// ..#.X...X.
-// ..+XXX+#X.
-// ..X.X.X.X.
-// .#+XXXXX+.
-// .+XXXXX+#.
-// #+XXXX+X..
-// ......#X..
